@@ -1,0 +1,13 @@
+{
+  "assetRoot": "./media/",
+  "bundles": {
+    "core": [
+      "theme.mp3",
+      "loading.jpg"
+    ],
+    "level1": [
+      "L1/background.jpg",
+      "L1/blip.wav"
+    ]
+  }
+}
