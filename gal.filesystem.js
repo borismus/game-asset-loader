@@ -129,7 +129,19 @@ GALFS.prototype.getAssetUrl = function(key) {
 };
 
 /**
- * Clears everything out of the root directory
+ * Checks if a file with the specified key exists in the filesystem
+ */
+GALFS.prototype.checkAsset = function(key, callback, failCallback) {
+  var lookupTable = this.lookupTable;
+  this.root.getFile(key, {}, function(fileEntry) {
+    // Save the file in the lookup table.
+    lookupTable[key] = fileEntry.toURL();
+    callback();
+  }, failCallback);
+};
+
+/**
+ * Clears everything out of the root directory. Mostly for unit testing.
  */
 GALFS.prototype.clear = function() {
   // Remove the root directory
@@ -141,7 +153,6 @@ GALFS.prototype.clear = function() {
     that.root = dirEntry;
   }, onError);
 };
-
 
 
 

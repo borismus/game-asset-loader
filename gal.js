@@ -12,39 +12,55 @@ var GameAssetLoader = function(manifestUrl) {
 };
 
 GameAssetLoader.prototype.init = function(callback) {
-  // Fetch the manifest
-  var that = this;
-  this.helper.fetchJSON(this.manifestUrl, function(data) {
-    that.manifest = data;
-    // Prepare the adapter to download assets
-    that.adapter = new GameAssetLoader.adapterClass();
-    that.adapter.init(function() {
-      callback();
+  if (this.online()) {
+    var that = this;
+    // Fetch the manifest
+    this.helper.fetchJSON(this.manifestUrl, function(data) {
+      that.manifest = data;
+      // Save the manifest for offline use
+      localStorage.setItem(that.manifestUrl, JSON.stringify(data));
+      // Prepare the adapter to download assets
+      that.helper.initAdapter.call(that, callback);
     });
-
-  });
+  } else {
+    this.manifest = JSON.parse(localStorage.getItem(this.manifestUrl));
+    this.helper.initAdapter.call(this, callback);
+  }
 };
 
 /**
  * Downloads assets contained in the named bundle.
  *
- * @param {String/Array} bundleName name of single bundle, or array of
- * bundle names to download
- * @param {Function} downloadCallback function to call after requested bundles
- * have been downloaded
+ * @param {String} bundleName name of single bundle to download
+ * @param {Function} callback function to call after requested bundles
+ * have been downloaded or if there's an error downloading
  * @param {Function} progressCallback a thing
  */
-GameAssetLoader.prototype.download = function(bundleName, downloadCallback,
+GameAssetLoader.prototype.download = function(bundleName, callback,
                                               progressCallback) {
+  var bundle = this.manifest.bundles[bundleName];
+  if (!bundle) {
+    callback({success: false});
+    return;
+  }
+
+  if (!this.online()) {
+    // If offline, check for the resources, and if they exist, callback
+    this.check(bundleName, function(result) {
+      if (result.success) {
+        callback({success: true, cached: true});
+      }
+    });
+  }
+
   var adapter = this.adapter;
   var manifest = this.manifest;
-  var bundle = manifest.bundles[bundleName];
 
   // Setup a loop via callback chaining
   (function loop(index) {
     // If we've finished loading all of the assets in the bundle
     if (index == bundle.length) {
-      downloadCallback();
+      callback({success: true});
       return;
     }
 
@@ -64,14 +80,62 @@ GameAssetLoader.prototype.download = function(bundleName, downloadCallback,
 };
 
 /**
+ * @param {String} bundleName name of bundle to check
+ * @param {Function} callback called with the result
+ */
+GameAssetLoader.prototype.check = function(bundleName, callback) {
+  var bundle = this.manifest.bundles[bundleName];
+  if (!bundle) {
+    callback({success: false});
+    return;
+  }
+
+  var adapter = this.adapter;
+  (function loop(index) {
+    // If we've finished loading all of the assets in the bundle
+    if (index == bundle.length) {
+      callback({success: true});
+      return;
+    }
+    var key = bundle[index];
+    adapter.checkAsset(key, function() {
+      // Iterate to the next file
+      loop(index + 1);
+    }, function() {
+      // Failure
+      callback({success: false});
+    });
+
+  })(0);
+};
+
+/**
  * Gets URL to loaded asset
  *
  * @param {String} assetPath path of the asset relative to the manifest
  * root
  * @return {String} url to the asset in the local filesystem
+ * @throws {Exception} if the asset doesn't actually exist
  */
 GameAssetLoader.prototype.get = function(assetPath) {
-  return this.adapter.getAssetUrl(assetPath);
+  return this.adapter.getAssetUrl(assetPath) || null;
+};
+
+/**
+ * Gets the last cached time for an asset at a given path
+ *
+ * @param {String} assetPath relative path of asset
+ * @return {Int} UNIX time of the last time the asset was cached
+ */
+GameAssetLoader.prototype.cacheTime = function(assetPath) {
+  return Math.random();
+};
+
+/**
+ * @return {Boolean} true iff the browser is online
+ */
+GameAssetLoader.prototype.online = function() {
+  return navigator.onLine;
 };
 
 /**
@@ -87,5 +151,12 @@ GameAssetLoader.prototype.helper = {
       }
     };
     xhr.send();
+  },
+
+  initAdapter: function(callback) {
+    this.adapter = new GameAssetLoader.adapterClass();
+    this.adapter.init(function() {
+      callback();
+    });
   }
 };
