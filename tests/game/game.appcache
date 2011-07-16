@@ -1,5 +1,10 @@
 CACHE MANIFEST
+
+CACHE:
 index.html
 game.js
 ../../gal.js
 ../../gal.filesystem.js
+
+NETWORK:
+*
