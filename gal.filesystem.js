@@ -26,12 +26,12 @@ var createDir = function(root, folders, callback) {
   }, onError);
 };
 
-dirname = function(path) {
+var dirname = function(path) {
   var match = path.match( /(.*)\// );
   return match && match[1] || "";
 };
 
-basename = function(path) {
+var basename = function(path) {
   return path.replace( /.*\//, "" );
 };
 
@@ -49,26 +49,12 @@ GALFS.prototype.init = function(callback) {
   window.requestFileSystem  = window.requestFileSystem ||
       window.webkitRequestFileSystem;
 
+  // BlobBuilder shim
   window.BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder;
+
   var that = this;
-  var quotaCallback = function(granted) {
-    console.log('got quota:', granted);
-    // Once quota is granted, initialize a filesystem
-    window.requestFileSystem(PERSISTENT, granted, onInitFs, onError);
-  };
-  var errorCallback = function() {console.log('error');};
-
-  // Get quota
-  var size = 1024*1024*100;
-  webkitStorageInfo.requestQuota(PERSISTENT, size,
-    quotaCallback,
-    errorCallback);
-
   // Callback when the filesystem has been initialized
   var onInitFs = function(fs) {
-    console.log('opened filesystem');
-
-    // TODO: do we really need a handle to the filesystem?
     that.fs = fs;
 
     // Create a directory for the root of the gal
@@ -77,6 +63,20 @@ GALFS.prototype.init = function(callback) {
       callback();
     }, onError);
   };
+
+  // Callback when the filesystem API has granted quota
+  var quotaCallback = function(granted) {
+    console.log('got quota:', granted);
+    // Once quota is granted, initialize a filesystem
+    window.requestFileSystem(window.PERSISTENT, granted, onInitFs, onError);
+  };
+  var errorCallback = function() {console.log('error');};
+
+  // Get quota
+  var size = 1024*1024*100;
+  webkitStorageInfo.requestQuota(window.PERSISTENT, size,
+    quotaCallback,
+    errorCallback);
 };
 
 /**

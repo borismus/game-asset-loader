@@ -24,14 +24,15 @@ test('missing assets', function() {
     gal.clearFS();
     start();
     equal(gal.get('foooo.png'), null,
-          'getting path of files not in the cache should raise an exception');
+          'path of files not in the cache should be null');
   });
 });
 
 test('downloading works', function() {
   var gal = new GameAssetLoader('gal.manifest');
   stop(1000);
-  var onDownloaded = function() {
+
+  gal.onLoaded('core', function() {
     start();
     ok(true, 'successfully downloaded core bundle');
     var url = gal.get('loading.jpg');
@@ -44,25 +45,31 @@ test('downloading works', function() {
         ok(true, 'checked that core exists!');
       }
     });
-  };
+  });
 
   gal.init(function() {
     gal.clearFS();
-    gal.download('core', onDownloaded);
+    gal.download('core');
   });
 });
 
 test('progress updates get sent', function() {
   var gal = new GameAssetLoader('gal.manifest');
+  var iter = 1;
+  gal.onProgress('core', function(status) {
+    equals(status.current, iter, 'progress counter is accurate');
+    iter++;
+  });
+
+  gal.onLoaded('core', function() {
+    start();
+    ok(true, 'core finished loading!');
+  });
+
   stop(1000);
   gal.init(function() {
     gal.clearFS();
-    var iter = 1;
-    gal.download('core', function() {}, function(current, total) {
-      start();
-      equals(current, iter, 'progress counter is accurate');
-      iter++;
-    });
+    gal.download('core');
   });
 });
 
@@ -87,19 +94,39 @@ test('checking loaded assets fails if no asset available.', function() {
 test('ensure that subdir/resources.png load properly', function() {
   var gal = new GameAssetLoader('gal.manifest');
   stop(1000);
-  var onDownloaded = function() {
+  gal.onLoaded('level1', function() {
     start();
     ok(true, 'successfully downloaded core bundle');
     var url = gal.get('L1/background.jpg');
     equals(url, 'filesystem:http://localhost/persistent/gal/L1/background.jpg',
           'url of nested file is correct');
-  };
+  });
 
   gal.init(function() {
     gal.clearFS();
-    gal.download('level1', onDownloaded);
+    gal.download('level1');
   });
 });
+
+
+test('auto downloading', function() {
+  var gal = new GameAssetLoader('gal-auto.manifest');
+  stop(1000);
+  var ord = 0;
+  gal.init(function() {
+    gal.clearFS();
+    gal.onLoaded('core', function() {
+      equal(ord, 0, 'core loads first');
+      ord++;
+    });
+    gal.onLoaded('level1', function() {
+      start();
+      equal(ord, 1, 'level1 loads next');
+    });
+  });
+});
+
+
 
 module('offline');
 
@@ -131,23 +158,25 @@ test('assets are still available while offline', function() {
 
   // Load gal
   var gal = new GameAssetLoader('gal.manifest');
+  gal.onLoaded('core', function() {
+    // Then load gal again, but in offline mode
+    var gal2 = new GameAssetLoader('gal.manifest');
+    // Force gal2 to think that it's offline
+    gal2.online = function() { return false; };
+    gal2.init(function() {
+      gal2.check('core', function(response) {
+        start();
+        // Ensure that core is loaded in gal2.
+        ok(response.success, 'core is loaded though gal2 is offline');
+      });
+    });
+  });
+
   stop(1000);
   gal.init(function() {
     gal.clearFS();
     // Download the core assets
-    gal.download('core', function() {
-      // Then load gal again, but in offline mode
-      var gal2 = new GameAssetLoader('gal.manifest');
-      // Force gal2 to think that it's offline
-      gal2.online = function() { return false; };
-      gal2.init(function() {
-        gal2.check('core', function(response) {
-          start();
-          // Ensure that core is loaded in gal2.
-          ok(response.success, 'core should be loaded though gal2 is offline');
-        });
-      });
-    });
+    gal.download('core');
   });
 });
 
