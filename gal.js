@@ -179,6 +179,7 @@ GameAssetLoader.prototype.get = function(assetPath) {
  * @return {Int} UNIX time of the last time the asset was cached
  */
 GameAssetLoader.prototype.cacheTime = function(assetPath) {
+  // TODO(smus): implement meeeee!
   return Math.random();
 };
 
