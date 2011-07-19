@@ -32,18 +32,11 @@ GameAssetLoader.prototype.init = function(callback) {
     this.helper.fetchJSON(this.manifestUrl, function(manifest) {
       // Save the manifest for offline use
       localStorage.setItem(that.manifestUrl, JSON.stringify(manifest));
-      // Prepare the adapter to download assets
-      that.helper.initAdapter.call(that, function() {
-        that.helper.setManifest.call(that, manifest);
-        callback();
-      });
+      that.helper.finishInit.call(that, manifest, callback);
     });
   } else {
     var manifest = JSON.parse(localStorage.getItem(this.manifestUrl));
-    this.helper.initAdapter.call(this, function() {
-      that.helper.setManifest.call(that, manifest);
-      callback();
-    });
+    that.helper.finishInit.call(that, manifest, callback);
   }
 };
 
@@ -60,12 +53,20 @@ GameAssetLoader.prototype.download = function(bundleName) {
   }
 
   if (!this.online()) {
-    // If offline, check for the resources, and if they exist, callback
+    // If offline, check for downloaded resources, and if they exist, callback
     this.check(bundleName, function(result) {
       if (result.success) {
         // Already downloaded. Success!
-        this.helper.fireCallback(this.loaded, bundleName,
-                                 {success: true, cached: true});
+        this.helper.fireCallback(this.loaded, bundleName, {
+          success: true,
+          cached: true,
+          bundleName: bundleName
+        });
+      } else {
+        // Otherwise, since we're offline, error out.
+        this.helper.fireCallback(this.error, bundleName, {
+          error: 'Missing resources cant be downloaded while offline'
+        });
       }
     });
   }
@@ -76,7 +77,10 @@ GameAssetLoader.prototype.download = function(bundleName) {
   (function loop(index) {
     // If we've finished loading all of the assets in the bundle
     if (index == bundle.length) {
-      that.helper.fireCallback(that.loaded, bundleName, {success: true});
+      that.helper.fireCallback(that.loaded, bundleName, {
+        bundleName: bundleName,
+        success: true
+      });
       return;
     }
 
@@ -189,6 +193,10 @@ GameAssetLoader.prototype.online = function() {
  * Helper methods for the old GAL
  */
 GameAssetLoader.prototype.helper = {
+
+  /**
+   * Fetches JSON at a URL and calls the callback with the parsed object
+   */
   fetchJSON: function(url, callback) {
     var xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
@@ -200,6 +208,9 @@ GameAssetLoader.prototype.helper = {
     xhr.send();
   },
 
+  /**
+   * Initializes the adapter and calls back when that's done.
+   */
   initAdapter: function(callback) {
     this.adapter = new GameAssetLoader.adapterClass();
     this.adapter.init(function() {
@@ -207,6 +218,9 @@ GameAssetLoader.prototype.helper = {
     });
   },
 
+  /**
+   * Sets the manifest and parses out bundles and bundle order.
+   */
   setManifest: function(manifest) {
     this.manifest = manifest;
     // Set this.bundles object and this.bundleOrder array
@@ -215,29 +229,65 @@ GameAssetLoader.prototype.helper = {
       this.bundles[bundle.name] = bundle.contents;
       this.bundleOrder.push(bundle.name);
     }
-    if (manifest.autoDownload && this.online()) {
-      this.helper.downloadAll.call(this);
-    }
   },
 
-  addCallback: function(object, bundleName, callback) {
-    if (!object[bundleName]) {
+  /**
+   * Initializes the adapter and assigns the manifest.
+   * Starts downloading assets if the manifest is set to autoDownload.
+   */
+  finishInit: function(manifest, callback) {
+    var helper = this.helper;
+    var context = this;
+    helper.initAdapter.call(context, function() {
+      helper.setManifest.call(context, manifest);
+      // Optionally, start auto-download
+      if (manifest.autoDownload && context.online()) {
+        helper.downloadAll.call(context);
+      }
+      callback();
+    });
+  },
+
+  /**
+   * Adds a callback associated with a bunle name
+   * @param {Object} callbacks an object associated with an event type
+   *    (ex. bundle loaded, bundle load progress updated, bundle failed)
+   * @param {String} bundleName the name of the bundle to monitor. If set
+   *    to "*", all bundles will be monitored
+   * @param {Function} callback the function to call
+   */
+  addCallback: function(callbacks, bundleName, callback) {
+    if (typeof bundleName == "function") {
+      // bundleName is optional, and may be a callback instead.
+      callback = bundleName;
+      bundleName = '*';
+    }
+    if (!callbacks[bundleName]) {
       // Add an empty array
-      object[bundleName] = [];
+      callbacks[bundleName] = [];
     }
 
-    object[bundleName].push(callback);
+    callbacks[bundleName].push(callback);
   },
 
+  /**
+   *
+   *
+   *
+   */
   fireCallback: function(object, bundleName, params) {
+    this.fireCallbackHelper(object, bundleName, params);
+    // Also fire all * callbacks
+    this.fireCallbackHelper(object, '*', params);
+  },
+
+  fireCallbackHelper: function(object, bundleName, params) {
     var callbacks = object[bundleName];
     if (callbacks) {
       for (var i = 0; i < callbacks.length; i++) {
         callbacks[i](params);
       }
     }
-    // TODO: Also fire all * callbacks (ie. if bundleName is '*', then
-    // event should fire for all bundles)
   },
 
   downloadAll: function() {

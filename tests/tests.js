@@ -108,6 +108,24 @@ test('ensure that subdir/resources.png load properly', function() {
   });
 });
 
+test('unqualified onLoaded, onError, etc calls work', function() {
+  // If no bundle name is specified in gal.onLoaded calls:
+  //    gal.onLoaded(function() { /* something */ })
+  // Then callback should fire for all bundles.
+  var gal = new GameAssetLoader('gal.manifest');
+  gal.onLoaded(function(info) {
+    start();
+    equals(info.bundleName, 'core', 'core bundle loaded');
+    iter++;
+  });
+
+  stop(1000);
+  gal.init(function() {
+    gal.clearFS();
+    gal.download('core');
+  });
+});
+
 
 test('auto downloading', function() {
   var gal = new GameAssetLoader('gal-auto.manifest');

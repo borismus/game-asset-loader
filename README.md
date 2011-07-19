@@ -40,15 +40,21 @@ Setup callbacks to check bundle loading completion and downloaded
 states.
 
     // Set a callback so that whenever bundleName is ready to use,
-    gal.onLoaded("bundleName", function() {
+    gal.onLoaded("bundleName", function(info) {
       // This function is called
       // Note: if the bundle is loaded already, callback fires right away
+      // info.bundleName contains the bundle that was just loaded
     });
 
     // Set a callback whenever a bundle is being loaded
     gal.onProgress("bundleName", function(progress) {
       // Calls back with progress.current and progress.total whenever more
       // of the bundle is downloaded.
+    });
+
+    // Set a callback whenever any bundle loading causes an error
+    gal.onError(function(error) {
+      // Error contains some stuff
     });
 
 Explicitly download a bundle (this only makes sense if autoDownload is
