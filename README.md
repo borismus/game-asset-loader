@@ -4,8 +4,8 @@
 * bundles: an array of objects which describe groups of assets, containing:
     * name: a unique name for the group of assets
     * contents: an array containing relative pathes to each asset in the bundle
-* autoDownload: a flag that, if true, will download all of the bundled
-  assets in roder
+* autoDownload: a flag that, if true, will start downloading all of the bundled
+  assets in order as soon as GAL inits
 
 Here is an example manifest file:
 
