@@ -1,17 +1,23 @@
 {
   "assetRoot": "../media/",
-  "bundles": {
-    "core": [
+  "bundles": [{
+    "name": "core",
+    "contents": [
       "theme.mp3",
       "loading.jpg"
-    ],
-    "level1": [
+    ]
+  }, {
+    "name": "level1",
+    "contents": [
       "L1/background.jpg",
       "L1/blip.wav"
-    ],
-    "level2": [
+    ]
+  }, {
+    "name": "level2",
+    "contents": [
       "L2/foo.jpg",
       "L2/bar.mp3"
     ]
-  }
+  }],
+  "autoDownload": false
 }

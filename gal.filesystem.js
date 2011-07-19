@@ -1,4 +1,4 @@
-(function() {
+(function(gal) {
 var ROOT_DIR = 'gal';
 
 var onError = function(error) {
@@ -156,10 +156,10 @@ GALFS.prototype.clear = function() {
 
 
 
-if (!GameAssetLoader) {
+if (!gal) {
   throw 'Game asset loader needs to be loaded before loading the fs adapter';
 }
 
-GameAssetLoader.adapterClass = GALFS;
+gal.adapterClass = GALFS;
 
-}());
+}(GameAssetLoader));

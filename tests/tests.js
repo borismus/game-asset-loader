@@ -53,26 +53,6 @@ test('downloading works', function() {
   });
 });
 
-test('progress updates get sent', function() {
-  var gal = new GameAssetLoader('gal.manifest');
-  var iter = 1;
-  gal.onProgress('core', function(status) {
-    equals(status.current, iter, 'progress counter is accurate');
-    iter++;
-  });
-
-  gal.onLoaded('core', function() {
-    start();
-    ok(true, 'core finished loading!');
-  });
-
-  stop(1000);
-  gal.init(function() {
-    gal.clearFS();
-    gal.download('core');
-  });
-});
-
 test('checking loaded assets fails if no asset available.', function() {
   var gal = new GameAssetLoader('gal.manifest');
   stop(1000);
@@ -108,6 +88,26 @@ test('ensure that subdir/resources.png load properly', function() {
   });
 });
 
+test('progress updates get sent', function() {
+  var gal = new GameAssetLoader('gal.manifest');
+  var iter = 1;
+  gal.onProgress('core', function(status) {
+    equals(status.current, iter, 'progress counter is accurate');
+    iter++;
+  });
+
+  gal.onLoaded('core', function() {
+    start();
+    ok(true, 'core finished loading!');
+  });
+
+  stop(1000);
+  gal.init(function() {
+    gal.clearFS();
+    gal.download('core');
+  });
+});
+
 test('unqualified onLoaded, onError, etc calls work', function() {
   // If no bundle name is specified in gal.onLoaded calls:
   //    gal.onLoaded(function() { /* something */ })
@@ -116,7 +116,6 @@ test('unqualified onLoaded, onError, etc calls work', function() {
   gal.onLoaded(function(info) {
     start();
     equals(info.bundleName, 'core', 'core bundle loaded');
-    iter++;
   });
 
   stop(1000);
