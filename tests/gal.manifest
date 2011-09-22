@@ -15,8 +15,7 @@
   }, {
     "name": "level2",
     "contents": [
-      "L2/foo.jpg",
-      "L2/bar.mp3"
+      "L2/intro.mov"
     ]
   }],
   "autoDownload": false

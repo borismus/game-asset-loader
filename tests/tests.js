@@ -1,6 +1,6 @@
 $(function() {
 
-// Helper method to clear the filesystem
+// Helper method to clear the filesystem.
 GameAssetLoader.prototype.clearFS = function() {
   this.adapter.clear();
 };
@@ -36,8 +36,8 @@ test('downloading works', function() {
     start();
     ok(true, 'successfully downloaded core bundle');
     var url = gal.get('loading.jpg');
-    equals(url, 'filesystem:http://localhost/persistent/gal/loading.jpg',
-          'url of loading.jpg is correct');
+    var pattern = /filesystem:.*\/persistent\/gal\/loading.jpg/;
+    ok(url.match(pattern), 'url of loading.jpg is correct');
     stop(1000);
     gal.check('core', function(result) {
       if (result.success) {
@@ -77,9 +77,9 @@ test('ensure that subdir/resources.png load properly', function() {
   gal.onLoaded('level1', function() {
     start();
     ok(true, 'successfully downloaded core bundle');
+    var pattern = /filesystem:.*\/persistent\/gal\/L1\/background.jpg/;
     var url = gal.get('L1/background.jpg');
-    equals(url, 'filesystem:http://localhost/persistent/gal/L1/background.jpg',
-          'url of nested file is correct');
+    ok(url.match(pattern), 'url of nested file is correct');
   });
 
   gal.init(function() {
@@ -148,17 +148,17 @@ test('auto downloading', function() {
 module('offline');
 
 test('offline manifest loading', function() {
-  // Clear localStorage so we're not getting cached manifests from prior tests
+  // Clear localStorage so we're not getting cached manifests from prior tests.
   localStorage.clear();
 
-  // Load gal
+  // Load gal.
   var gal = new GameAssetLoader('gal.manifest');
   stop(1000);
   gal.init(function() {
     gal.clearFS();
-    // Load gal again, but in offline mode
+    // Load gal again, but in offline mode.
     var gal2 = new GameAssetLoader('gal.manifest');
-    // Force gal to think that it's offline
+    // Force gal to think that it's offline.
     gal2.online = function() { return false; };
     gal2.init(function() {
       start();
@@ -170,15 +170,15 @@ test('offline manifest loading', function() {
 });
 
 test('assets are still available while offline', function() {
-  // Clear localStorage so we're not getting cached manifests from prior tests
+  // Clear localStorage so we're not getting cached manifests from prior tests.
   localStorage.clear();
 
-  // Load gal
+  // Load gal.
   var gal = new GameAssetLoader('gal.manifest');
   gal.onLoaded('core', function() {
-    // Then load gal again, but in offline mode
+    // Then load gal again, but in offline mode.
     var gal2 = new GameAssetLoader('gal.manifest');
-    // Force gal2 to think that it's offline
+    // Force gal2 to think that it's offline.
     gal2.online = function() { return false; };
     gal2.init(function() {
       gal2.check('core', function(response) {
@@ -192,7 +192,7 @@ test('assets are still available while offline', function() {
   stop(1000);
   gal.init(function() {
     gal.clearFS();
-    // Download the core assets
+    // Download the core assets.
     gal.download('core');
   });
 });
@@ -220,7 +220,8 @@ test('basic caching test', function() {
 test('properly caches files', function() {
   // Run GAL twice on same manifest.
   var gal = new GameAssetLoader('gal.manifest');
-  var cacheTime1, cacheTime2;
+  var cacheTime1;
+  var cacheTime2;
   stop(1000);
   gal.init(function() {
     gal.clearFS();
@@ -228,7 +229,7 @@ test('properly caches files', function() {
       cacheTime1 = gal.cacheTime('loading.jpg');
     });
   });
-  // Second time, make sure we don't actually reinsert the files
+  // Second time, make sure we don't actually reinsert the files.
   gal = new GameAssetLoader('gal.manifest');
   gal.init(function() {
     gal.clearFS();
@@ -241,15 +242,14 @@ test('properly caches files', function() {
 });
 
 test('knows how to cleanup files', function() {
-  // Point first to one manifest, then to another with one fewer file
-  // Ensure that the missing file is gone from the FS
+  // TODO(smus): implement me.
+  // Point first to one manifest, then to another with one fewer file.
+  // Ensure that the missing file is gone from the FS.
 });
 
 test('handles large files', function() {
-  // Cache a large file
-});
-
-test('sample', function() {
+  // TODO(smus): implement me.
+  // Cache a large file.
 });
 
 });

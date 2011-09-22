@@ -74,3 +74,4 @@ launch Level 5, you should ensure that Level 5 assets are loaded.
 Get local URLs to downloaded assets.
 
     var url = gal.get("image/baz.png");
+

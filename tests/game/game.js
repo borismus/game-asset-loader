@@ -1,4 +1,5 @@
 var gal = new GameAssetLoader('gal.manifest');
+
 // When gal initializes, download just the core
 gal.init(function() {
   gal.download('core');
@@ -11,6 +12,7 @@ gal.onLoaded('core', function(result) {
     document.querySelector('img').src = gal.get('loading.jpg');
   }
 });
+
 // When level 1 is loaded
 gal.onLoaded('level1', function(result) {
   if (result.success) {
@@ -20,6 +22,10 @@ gal.onLoaded('level1', function(result) {
   }
 });
 
-function onLevelPassed(nextLevel) {
-  gal.download('level1');
-}
+gal.onLoaded('level2', function(result) {
+  if (result.success) {
+    var video = document.querySelector('video');
+    video.src = gal.get('L2/intro.mov');
+    video.play();
+  }
+});
