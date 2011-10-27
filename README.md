@@ -11,7 +11,7 @@ Here is an example manifest file:
 
     {
       "assetRoot": "url/to/assets",
-      "bundles" [
+      "bundles": [
         {
           "name": "unique bundle name",
           "contents": [
